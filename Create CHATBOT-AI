@@ -1,0 +1,41 @@
+#include <iostream>
+#include <string>
+#include <algorithm> 
+#include <sstream>   
+std::string toLower(std::string input) {
+    std::transform(input.begin(), input.end(), input.begin(), ::tolower);
+    return input;
+}
+
+std::string getResponse(std::string userInput) {
+    userInput = toLower(userInput);
+    if (userInput.find("hello") != std::string::npos || userInput.find("hi") != std::string::npos) {
+        return "Hello! How can I help you today?";
+    } else if (userInput.find("how are you") != std::string::npos || userInput.find("what's up") != std::string::npos) {
+        return "I'm just a computer program, but I'm here and ready to assist you!";
+    } else if (userInput.find("bye") != std::string::npos || userInput.find("goodbye") != std::string::npos) {
+        return "Goodbye! Have a great day!";
+    } else {
+        return "Sorry, I didn't understand that. Can you please ask something else?";
+    }
+}
+
+int main() {
+    std::cout << "Welcome! Ask me anything or say goodbye to end.\n";
+
+    std::string userInput;
+    while (true) {
+        std::cout << "You: ";
+        std::getline(std::cin, userInput);
+
+        if (userInput == "exit" || userInput == "quit" || userInput == "goodbye") {
+            std::cout << "Chatbot: Goodbye!\n";
+            break;
+        }
+
+        std::string response = getResponse(userInput);
+        std::cout << "Chatbot: " << response << "\n";
+    }
+
+    return 0;
+}
