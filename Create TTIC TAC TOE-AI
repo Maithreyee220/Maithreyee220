@@ -1,0 +1,164 @@
+#include <iostream>
+#include <vector>
+#include <limits>
+
+using namespace std;
+
+const char HUMAN = 'O';
+const char AI = 'X';
+const char EMPTY = ' ';
+
+void printBoard(const vector<char>& board) {
+    cout << " " << board[0] << " | " << board[1] << " | " << board[2] << " " << endl;
+    cout << "---|---|---" << endl;
+    cout << " " << board[3] << " | " << board[4] << " | " << board[5] << " " << endl;
+    cout << "---|---|---" << endl;
+    cout << " " << board[6] << " | " << board[7] << " | " << board[8] << " " << endl;
+}
+
+bool isMovesLeft(const vector<char>& board) {
+    for (char cell : board) {
+        if (cell == EMPTY) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int evaluate(const vector<char>& board) {
+    for (int row = 0; row < 3; row++) {
+        if (board[row * 3] == board[row * 3 + 1] && board[row * 3 + 1] == board[row * 3 + 2]) {
+            if (board[row * 3] == AI)
+                return +10;
+            else if (board[row * 3] == HUMAN)
+                return -10;
+        }
+    }
+
+    for (int col = 0; col < 3; col++) {
+        if (board[col] == board[col + 3] && board[col + 3] == board[col + 6]) {
+            if (board[col] == AI)
+                return +10;
+            else if (board[col] == HUMAN)
+                return -10;
+        }
+    }
+
+    if (board[0] == board[4] && board[4] == board[8]) {
+        if (board[0] == AI)
+            return +10;
+        else if (board[0] == HUMAN)
+            return -10;
+    }
+    if (board[2] == board[4] && board[4] == board[6]) {
+        if (board[2] == AI)
+            return +10;
+        else if (board[2] == HUMAN)
+            return -10;
+    }
+
+    return 0;
+}
+
+int minimax(vector<char>& board, int depth, bool isMaximizing) {
+    int score = evaluate(board);
+
+    if (score == 10)
+        return score - depth;
+
+    if (score == -10)
+        return score + depth;
+
+    if (!isMovesLeft(board))
+        return 0;
+
+    if (isMaximizing) {
+        int best = numeric_limits<int>::min();
+
+        for (int i = 0; i < 9; i++) {
+            if (board[i] == EMPTY) {
+                board[i] = AI;
+                best = max(best, minimax(board, depth + 1, !isMaximizing));
+                board[i] = EMPTY;
+            }
+        }
+        return best;
+    }
+    else {
+        int best = numeric_limits<int>::max();
+
+        for (int i = 0; i < 9; i++) {
+            if (board[i] == EMPTY) {
+                board[i] = HUMAN;
+                best = min(best, minimax(board, depth + 1, !isMaximizing));
+                board[i] = EMPTY;
+            }
+        }
+        return best;
+    }
+}
+
+int findBestMove(vector<char>& board) {
+    int bestVal = numeric_limits<int>::min();
+    int bestMove = -1;
+
+    for (int i = 0; i < 9; i++) {
+        if (board[i] == EMPTY) {
+            board[i] = AI;
+            int moveVal = minimax(board, 0, false);
+            board[i] = EMPTY;
+
+            if (moveVal > bestVal) {
+                bestMove = i;
+                bestVal = moveVal;
+            }
+        }
+    }
+    return bestMove;
+}
+
+int main() {
+    vector<char> board(9, EMPTY);
+    int move;
+
+    cout << "Tic-Tac-Toe Game\n";
+    printBoard(board);
+
+    while (true) {
+        cout << "Enter your move (1-9): ";
+        cin >> move;
+        move--; // Adjusting for 0-based index
+        if (move < 0 || move >= 9 || board[move] != EMPTY) {
+            cout << "Invalid move. Try again.\n";
+            continue;
+        }
+
+        board[move] = HUMAN;
+        printBoard(board);
+
+        if (evaluate(board) == -10) {
+            cout << "You win!\n";
+            break;
+        }
+        if (!isMovesLeft(board)) {
+            cout << "It's a draw!\n";
+            break;
+        }
+
+        int bestMove = findBestMove(board);
+        board[bestMove] = AI;
+        cout << "AI played at position " << bestMove + 1 << endl;
+        printBoard(board);
+
+        if (evaluate(board) == 10) {
+            cout << "AI wins!\n";
+            break;
+        }
+        if (!isMovesLeft(board)) {
+            cout << "It's a draw!\n";
+            break;
+        }
+    }
+
+    return 0;
+}
