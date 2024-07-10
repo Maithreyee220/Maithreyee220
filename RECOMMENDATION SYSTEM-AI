@@ -1,0 +1,87 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+
+const int NUM_USERS = 5;
+const int NUM_ITEMS = 4;
+const int NUM_FEATURES = 2;
+const int NUM_ITERATIONS = 5000;
+const double LEARNING_RATE = 0.01;
+const double REGULARIZATION = 0.02;
+
+void initialize_matrix(std::vector<std::vector<double>>& matrix, int rows, int cols) {
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            matrix[i][j] = static_cast<double>(rand()) / RAND_MAX;
+        }
+    }
+}
+
+void matrix_factorization(std::vector<std::vector<double>>& R, 
+                          std::vector<std::vector<double>>& P, 
+                          std::vector<std::vector<double>>& Q, 
+                          int steps, double alpha, double beta) {
+    int N = R.size();
+    int M = R[0].size();
+    int K = P[0].size();
+
+    for (int step = 0; step < steps; ++step) {
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < M; ++j) {
+                if (R[i][j] > 0) {
+                    double eij = R[i][j];
+                    for (int k = 0; k < K; ++k) {
+                        eij -= P[i][k] * Q[k][j];
+                    }
+                    for (int k = 0; k < K; ++k) {
+                        P[i][k] += alpha * (2 * eij * Q[k][j] - beta * P[i][k]);
+                        Q[k][j] += alpha * (2 * eij * P[i][k] - beta * Q[k][j]);
+                    }
+                }
+            }
+        }
+    }
+}
+
+double predict_rating(const std::vector<std::vector<double>>& P, 
+                      const std::vector<std::vector<double>>& Q, 
+                      int user, int item) {
+    double rating = 0.0;
+    for (int k = 0; k < P[0].size(); ++k) {
+        rating += P[user][k] * Q[k][item];
+    }
+    return rating;
+}
+
+int main() {
+    srand(static_cast<unsigned>(time(0)));
+
+    std::vector<std::vector<double>> R = {
+        {5, 3, 0, 1},
+        {4, 0, 0, 1},
+        {1, 1, 0, 5},
+        {1, 0, 0, 4},
+        {0, 1, 5, 4},
+    };
+
+    std::vector<std::vector<double>> P(NUM_USERS, std::vector<double>(NUM_FEATURES));
+    std::vector<std::vector<double>> Q(NUM_FEATURES, std::vector<double>(NUM_ITEMS));
+
+    initialize_matrix(P, NUM_USERS, NUM_FEATURES);
+    initialize_matrix(Q, NUM_FEATURES, NUM_ITEMS);
+
+    matrix_factorization(R, P, Q, NUM_ITERATIONS, LEARNING_RATE, REGULARIZATION);
+
+    for (int i = 0; i < NUM_USERS; ++i) {
+        for (int j = 0; j < NUM_ITEMS; ++j) {
+            if (R[i][j] == 0) { // Predict only for unrated items
+                double predicted_rating = predict_rating(P, Q, i, j);
+                std::cout << "User " << i + 1 << " -> Item " << j + 1 << " Predicted Rating: " << predicted_rating << std::endl;
+            }
+        }
+    }
+
+    return 0;
+}
